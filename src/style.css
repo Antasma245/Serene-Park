@@ -1,0 +1,515 @@
+/* Canvas scale (applied to all UI elements) */
+:root {
+  --s: 1;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0a0f;
+  font-family: 'DotGothic16', system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+  color: #f4f1ea;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#app canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Overlay frame lined up with base scene */
+#canvas-ui {
+  position: fixed;
+  z-index: 40;
+  pointer-events: none;
+}
+
+/* Black semi-transparent trapezoid anchored to top-right of canvas  */
+#hud {
+  position: absolute;
+  top: 0;
+  right: 0;
+  box-sizing: border-box;
+  width: calc(298px * var(--s));
+  padding: calc(3px * var(--s)) 0 calc(4px * var(--s));
+  display: flex;
+  flex-direction: column;
+  gap: calc(2px * var(--s));
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, calc(42px * var(--s)) 100%);
+  color: #f4f1ea;
+  font-size: calc(12px * var(--s));
+  pointer-events: auto;
+}
+
+/* Top row (song selector that scrolls left and right) */
+.hud-song {
+  position: relative;
+  height: calc(16px * var(--s));
+  padding: 0 calc(12px * var(--s)) 0 calc(50px * var(--s));
+}
+
+.hud-song-track {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  /* Short titles stay centered while scrolling titles anchor to the left */
+  justify-content: center;
+}
+
+/* Titles wider than track start to scroll from very left */
+.hud-song-track:has(.hud-song-text.scrolling) {
+  justify-content: flex-start;
+}
+
+.hud-song-text {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Single-direction scroll that pauses at each end before reversing */
+.hud-song-text.scrolling {
+  animation: hud-marquee var(--marquee-dur, 8s) linear infinite alternate;
+}
+
+@keyframes hud-marquee {
+  0%, 20% { transform: translateX(0); }
+  80%, 100% { transform: translateX(calc(-1 * var(--marquee-shift, 0px))); }
+}
+
+/* Transparent native <select> laid over row to give dropdown */
+.hud-song select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: transparent;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.hud-song option {
+  color: #f4f1ea;
+  background: #1a1a22;
+}
+
+/* Bottom row (progress bar, play/pause, language button) */
+.hud-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: calc(8px * var(--s));
+  height: calc(22px * var(--s));
+  padding: 0 calc(12px * var(--s)) 0 calc(50px * var(--s));
+}
+
+.hud-progress {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: calc(17px * var(--s));
+  border-radius: calc(5px * var(--s));
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.hud-progress-fill {
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(90deg, #ffd54a, #fff3b0);
+  transition: width 0.4s ease;
+}
+
+.hud-progress-label {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(8px * var(--s));
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+/* Progress bar cycles through RGB once full */
+.hud-progress.maxed .hud-progress-fill {
+  background: linear-gradient(90deg, #ff0040, #ffae00, #4dff00, #00e5ff, #4d00ff, #ff0040);
+  background-size: 300% 100%;
+  animation: hud-progress-rgb 2.5s linear infinite;
+}
+
+@keyframes hud-progress-rgb {
+  from { background-position: 300% 50%; }
+  to { background-position: 0% 50%; }
+}
+
+.hud-play {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  height: calc(17px * var(--s));
+  /* Fix width so progress bar does not resize when label changes length */
+  width: calc(76px * var(--s));
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4f1ea;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: calc(5px * var(--s));
+  padding: 0 calc(6px * var(--s));
+  font: inherit;
+  font-size: calc(9px * var(--s));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hud-play:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.hud-play:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hud-lang-slot {
+  display: flex;
+  flex: none;
+}
+
+/* While language menu is open, blur and disable other controls */
+body.menu-open .hud-song,
+body.menu-open .hud-progress,
+body.menu-open .hud-play {
+  filter: blur(3px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Language button sitting in HUD control row */
+#lang-button {
+  /* Same height as .hud-play so round button never looks oversized */
+  width: calc(17px * var(--s));
+  height: calc(17px * var(--s));
+  display: grid;
+  place-items: center;
+  padding: 0;
+  /* Rounded square matching corner radius of .hud-play */
+  border-radius: calc(5px * var(--s));
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4f1ea;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#lang-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Highlight language button while menu is open */
+#lang-button.active {
+  background: rgba(255, 213, 74, 0.85);
+  color: #1a1a22;
+}
+
+#lang-button .material-symbols-outlined {
+  font-size: calc(12px * var(--s));
+  line-height: 1;
+}
+
+/* Full-screen semi-transparent How to Use menu */
+#how-to-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  background: rgba(8, 9, 16, 0.7);
+  backdrop-filter: blur(4px);
+  color: #f4f1ea;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+#how-to-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Center title, language control and How to Use section with scaling via --s */
+.menu-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(9px * var(--s));
+  text-align: center;
+  width: min(94vw, calc(320px * var(--s)));
+  padding: 0 calc(8px * var(--s));
+}
+
+/* Keep title and subtitle close together above wider gap of panel */
+.menu-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(3px * var(--s));
+}
+
+.menu-title {
+  margin: 0;
+  /* Hold text on one line (shrink on narrow screens so it never wraps) */
+  white-space: nowrap;
+  font-size: calc(20px * var(--s));
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.menu-subtitle {
+  margin: 0;
+  color: rgba(244, 241, 234, 0.7);
+  font-size: calc(9px * var(--s));
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Segmented language control (labels fixed to JA/EN) */
+.menu-segmented {
+  display: inline-flex;
+  padding: calc(2px * var(--s));
+  gap: calc(2px * var(--s));
+  border-radius: calc(6px * var(--s));
+  background: rgba(20, 20, 30, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.menu-seg {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(1px * var(--s));
+  /* Fix width so both pills match in size */
+  box-sizing: border-box;
+  width: calc(60px * var(--s));
+  padding: calc(4px * var(--s)) calc(9px * var(--s));
+  border: none;
+  border-radius: calc(5px * var(--s));
+  background: transparent;
+  color: #f4f1ea;
+  font: inherit;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.menu-seg:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-seg.active {
+  background: #ffd54a;
+  color: #1a1a22;
+}
+
+.menu-seg-code {
+  font-size: calc(10px * var(--s));
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.menu-seg-name {
+  font-size: calc(8px * var(--s));
+  opacity: 0.85;
+}
+
+/* How to Use section under language pill (yellow header and white body) */
+.menu-howto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(4px * var(--s));
+  max-width: calc(210px * var(--s));
+}
+
+.menu-howto-title {
+  margin: 0;
+  color: #ffd54a;
+  font-size: calc(12px * var(--s));
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.menu-howto-body {
+  display: flex;
+  flex-direction: column;
+  gap: calc(6px * var(--s));
+  text-align: center;
+  font-size: calc(9px * var(--s));
+  line-height: 1.45;
+}
+
+.menu-howto-body p {
+  margin: 0;
+}
+
+.menu-howto-body small {
+  color: rgba(244, 241, 234, 0.7);
+  font-size: 0.85em;
+}
+
+.menu-footer {
+  position: absolute;
+  /* Anchor to canvas to keep credits inside it when window is taller than scene */
+  bottom: calc(50% - 180px * var(--s) + 9px * var(--s));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(1px * var(--s));
+  font-size: calc(8px * var(--s));
+  opacity: 0.7;
+}
+
+#splash {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0f;
+  color: #f4f1ea;
+  z-index: 20;
+  transition: opacity 0.6s ease;
+  font-size: calc(7px * var(--s));
+  opacity: 1;
+  pointer-events: none;
+}
+
+#splash.hidden {
+  opacity: 0;
+}
+
+#song-loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 15, 0.7);
+  color: #f4f1ea;
+  z-index: 15;
+  font-size: calc(9px * var(--s));
+  letter-spacing: 0.04em;
+  backdrop-filter: blur(6px);
+  transition: opacity 0.3s ease;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#song-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Full-screen rotation prompt for mobile devices held in portrait */
+#orient-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 9, 16, 0.7);
+  backdrop-filter: blur(4px);
+  color: #f4f1ea;
+  pointer-events: auto;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+#orient-overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.orient-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+  width: min(82vw, 320px);
+  padding: 0 16px;
+}
+
+.orient-icon {
+  font-size: 56px;
+  line-height: 1;
+  color: #ffd54a;
+  animation: orient-rotate 2.4s ease-in-out infinite;
+}
+
+@keyframes orient-rotate {
+  0%, 40% { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(-90deg); }
+}
+
+.orient-title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.orient-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  opacity: 0.85;
+}
+
+/* Dismiss button at bottom of prompt */
+.orient-ignore {
+  margin-top: 8px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f4f1ea;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.orient-ignore:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
