@@ -85,13 +85,15 @@ function splitBackdrop(tex: Texture): { upper: Texture; lake: Texture } {
 
 // Load every PNG/JSON asset in parallel then slice out per-character and backdrop sub-textures
 export async function loadSceneAssets(): Promise<SceneAssets> {
+  const base = import.meta.env.BASE_URL;
+
   const [day, night, sun, moon, buildingsData, avatars] = await Promise.all([
-    Assets.load<Texture>('/assets/backdrop_day.png'),
-    Assets.load<Texture>('/assets/backdrop_night.png'),
-    Assets.load<Texture>('/assets/sun.png'),
-    Assets.load<Texture>('/assets/moon.png'),
-    fetch('/assets/buildings.json').then((r) => r.json() as Promise<Building[]>),
-    Assets.load<Texture>('/assets/avatars.png'),
+    Assets.load<Texture>(`${base}assets/backdrop_day.png`),
+    Assets.load<Texture>(`${base}assets/backdrop_night.png`),
+    Assets.load<Texture>(`${base}assets/sun.png`),
+    Assets.load<Texture>(`${base}assets/moon.png`),
+    fetch(`${base}assets/buildings.json`).then((r) => r.json() as Promise<Building[]>),
+    Assets.load<Texture>(`${base}assets/avatars.png`),
   ]);
 
   const windows = expandBuildings(buildingsData);
