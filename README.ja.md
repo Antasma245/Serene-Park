@@ -2,7 +2,7 @@
 
 初音ミク「マジカルミライ 2026」プログラミング・コンテスト応募作品のリリックアプリ『Serene Park』です。
 
-[![Type-check & build](https://github.com/Antasma245/Serene-Park/actions/workflows/check-build.yml/badge.svg)](https://github.com/Antasma245/Serene-Park/actions/workflows/check-build.yml) [![Release](https://github.com/Antasma245/Serene-Park/actions/workflows/draft-release.yml/badge.svg)](https://github.com/Antasma245/Serene-Park/actions/workflows/draft-release.yml)
+[![Type-check & build](https://github.com/Antasma245/Serene-Park/actions/workflows/check-build.yml/badge.svg)](https://github.com/Antasma245/Serene-Park/actions/workflows/check-build.yml) [![Release](https://github.com/Antasma245/Serene-Park/actions/workflows/release.yml/badge.svg)](https://github.com/Antasma245/Serene-Park/actions/workflows/release.yml)
 
 ![thumbnail](https://github.com/user-attachments/assets/6d622e5c-b1fb-4d59-88f2-70ca4914e291)
 
